@@ -1,0 +1,725 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  #xp-root {
+    width:100%; height:100vh;
+    position:relative; overflow:hidden; font-family:Tahoma,Arial,sans-serif;
+    display:flex; flex-direction:column; user-select:none;
+  }
+  #desktop {
+    flex:1; position:relative; overflow:hidden; user-select:none;
+  }
+  #xp-wallpaper {
+    position:absolute; top:-5%; left:-5%; width:110%; height:110%; object-fit:fill;
+  }
+  #main-window {
+    position:absolute; top:24px; left:24px;
+    width:520px; height:400px;
+    background:#ece9d8;
+    border-top:2px solid #fff;
+    border-left:2px solid #fff;
+    border-right:2px solid #7a7a7a;
+    border-bottom:2px solid #7a7a7a;
+    box-shadow:2px 2px 0 #000, 4px 4px 8px rgba(0,0,0,0.4);
+    z-index:10; cursor:default;
+
+  }
+  #drawing-window {
+    position:absolute; top:50px; left:50px;
+    width:650px; height:500px;
+    background:#ece9d8;
+    border-top:2px solid #fff; border-left:2px solid #fff;
+    border-right:2px solid #7a7a7a; border-bottom:2px solid #7a7a7a;
+    box-shadow:2px 2px 0 #000, 4px 4px 8px rgba(0,0,0,0.4);
+    z-index:10; cursor:default;
+
+  }
+  .xp-titlebar {
+    height:28px;
+    background: linear-gradient(180deg, #0058e0 0%, #2a8bff 8%, #0058e0 40%, #0040c0 60%, #002888 100%);
+    display:flex; align-items:center; padding:0 4px 0 6px; gap:4px;
+    border-bottom:1px solid #001870;
+    user-select:none; cursor:move;
+  }
+  .xp-titlebar-text {
+    flex:1; color:#fff; font-size:11px; font-weight:700;
+    text-shadow:1px 1px 2px rgba(0,0,100,0.8);
+    font-family:Tahoma,Arial,sans-serif;
+  }
+  .xp-btn-group { display:flex; gap:2px; }
+  .xp-winbtn {
+    width:21px; height:21px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; color:#fff;
+    border:1px solid rgba(255,255,255,0.5); border-radius:3px;
+    cursor:pointer; font-family:Tahoma,Arial,sans-serif; line-height:1; padding:0;
+    background: linear-gradient(180deg, #5ba3ff 0%, #2a6cdd 40%, #0050c0 70%, #0040b0 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.4), 0 1px 1px rgba(0,0,0,0.3);
+    text-shadow:1px 1px 1px rgba(0,0,80,0.8);
+  }
+  .xp-winbtn.disabled {
+    opacity:0.4; cursor:not-allowed;
+    background: linear-gradient(180deg, #8ab0e0 0%, #5080b0 100%);
+  }
+  .xp-winbtn.close {
+    background: linear-gradient(180deg, #e05050 0%, #c03030 40%, #a02020 70%, #801010 100%);
+  }
+  .xp-winbtn.close:hover { filter:brightness(1.3); }
+  .xp-winbtn.max:hover { filter:brightness(1.25); }
+  .window-body {
+    padding:14px;
+    background: linear-gradient(180deg, #ece9d8 0%, #d8d5c8 100%);
+  }
+  .xp-inner {
+    background:#fff;
+    border-top:1px solid #7a7a7a; border-left:1px solid #7a7a7a;
+    border-right:1px solid #fff; border-bottom:1px solid #fff;
+    padding:22px 20px; text-align:center;
+  }
+  .username-display {
+    font-family:Tahoma,Arial,sans-serif;
+    font-size:26px; font-weight:700;
+    color:#003399; letter-spacing:1px;
+    margin-bottom:2px; line-height:1.2;
+  }
+  .xp-sub { font-size:10px; color:#666; font-family:Tahoma,Arial,sans-serif; margin-bottom:10px; }
+  .xp-typewriter {
+    font-family:'Share Tech Mono',monospace;
+    font-size:11px; color:#0040a0; min-height:16px; margin-bottom:14px;
+  }
+  .xp-typewriter::after { content:'_'; animation:xpblink 0.7s step-end infinite; }
+  @keyframes xpblink { 0%,100%{opacity:1} 50%{opacity:0} }
+  hr.xp-divider {
+    border:none; border-top:1px solid #aaa; border-bottom:1px solid #fff; margin:12px 0;
+  }
+  .xp-links {
+    display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-bottom:10px;
+  }
+  .xp-link {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:5px 14px;
+    background: linear-gradient(180deg, #fff 0%, #ece9d8 100%);
+    border-top:1px solid #fff; border-left:1px solid #fff;
+    border-right:1px solid #7a7a7a; border-bottom:1px solid #7a7a7a;
+    box-shadow:1px 1px 0 #000;
+    color:#000; font-size:11px; font-family:Tahoma,Arial,sans-serif;
+    text-decoration:none; cursor:pointer; font-weight:700; transition:background 0.1s;
+  }
+  .xp-link:hover { background: linear-gradient(180deg, #1e6ed0 0%, #669bdb 100%); }
+  .xp-link:active {
+    border-top:1px solid #7a7a7a; border-left:1px solid #7a7a7a;
+    border-right:1px solid #fff; border-bottom:1px solid #fff;
+    transform:translateY(1px);
+  }
+  #bottom-taskbar .xp-link {
+    height: 30px;
+    align-items: center;
+  }
+  .desktop-icon {
+    position:absolute; top:10px; left:10px;
+    display:inline-flex; align-items:center; gap:5px;
+    padding:15px 30px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(236,233,216,0.25) 100%);
+    border-top:1px solid rgba(255,255,255,0.25); border-left:1px solid rgba(255,255,255,0.25);
+    border-right:1px solid rgba(122,122,122,0.25); border-bottom:1px solid rgba(122,122,122,0.25);
+    box-shadow:1px 1px 0 rgba(0,0,0,0.25);
+    color:#000; font-size:14px; font-family:Tahoma,Arial,sans-serif;
+    text-decoration:none; cursor:pointer; font-weight:700; transition:background 0.1s;
+  }
+  .desktop-icon:hover { background: linear-gradient(180deg, rgba(196,223,255,0.25) 0%, rgba(168,207,255,0.25) 100%); }
+  .desktop-icon:active {
+    border-top:1px solid rgba(122,122,122,0.25); border-left:1px solid rgba(122,122,122,0.25);
+    border-right:1px solid rgba(255,255,255,0.25); border-bottom:1px solid rgba(255,255,255,0.25);
+    transform:translateY(1px);
+  }
+  .xp-link-yt { color:#cc0000; }
+  .xp-link-tw { color:#6400c8; }
+  .xp-link-dc { color:#3440d0; }
+  .xp-link-pp { color:#003080; }
+  .xp-status-bar {
+    background: linear-gradient(180deg, #ece9d8, #d4d0c0);
+    border-top:1px solid #aaa; padding:2px 8px;
+    font-size:10px; color:#444; display:flex; gap:12px; font-family:Tahoma,Arial,sans-serif;
+  }
+  .status-part { border:1px solid #999; border-right-color:#fff; border-bottom-color:#fff; padding:0 6px; }
+  #bsod {
+    position:absolute; inset:0; z-index:9999;
+    background:#0000aa; color:#fff;
+    font-family:'Share Tech Mono',monospace; font-size:13px;
+    padding:40px 50px; line-height:1.8;
+    display:none; flex-direction:column;
+  }
+  #bsod.show { display:flex; }
+  #bsod .bsod-header {
+    background:#aaaaaa; color:#0000aa;
+    padding:2px 8px; font-weight:bold; font-size:14px;
+    display:inline-block; margin-bottom:20px;
+  }
+  #bsod pre { font-family:'Share Tech Mono',monospace; font-size:12px; line-height:1.7; white-space:pre-wrap; }
+  #bsod .bsod-bar { width:0%; height:16px; background:#aaaaaa; margin:16px 0; transition:width 2.8s linear; }
+  #boot-screen {
+    position:absolute; inset:0; z-index:9998;
+    background:#000; display:flex; align-items:center; justify-content:center;
+  }
+  #boot-screen .boot-text {
+    color:#fff; font-family:Tahoma,Arial,sans-serif; font-size:18px; font-weight:700; letter-spacing:4px;
+  }
+  .dragging { user-select:none; }
+  #context-menu {
+    position: absolute;
+    background: #ece9d8;
+    border: 2px inset #7a7a7a;
+    box-shadow: 2px 2px 0 #000;
+    z-index: 1000;
+    display: none;
+    min-width: 120px;
+  }
+  .menu-item {
+    padding: 5px 20px;
+    cursor: default;
+    font-family: Tahoma, Arial, sans-serif;
+    font-size: 11px;
+    color: #000;
+  }
+  .menu-item:hover {
+    background: #c4dfff;
+  }
+  .menu-item.disabled {
+    color: #888;
+    cursor: not-allowed;
+  }
+  .menu-item.disabled:hover {
+    background: none;
+  }
+  #top-taskbar {
+    height:30px; flex-shrink:0;
+    background: linear-gradient(180deg, #000 0%, #333 100%);
+  }
+  #bottom-taskbar {
+    height:30px; flex-shrink:0;
+    background: linear-gradient(180deg, rgba(0,88,224,0.7) 0%, rgba(42,139,255,0.7) 50%, rgba(0,88,224,0.7) 100%);
+  }
+</style>
+
+<div id="xp-root">
+  <div id="boot-screen">
+    <div class="boot-text">STARTING..</div>
+  </div>
+
+  <div id="bsod">
+    <div class="bsod-header">A problem has been detected and Windows has been shut down</div>
+    <pre>A fatal exception occurred
+
+*** STOP: 0x0000001E (0xULTRAV, 0xVGMR99, 0xXPCOOL, 0xDEADBEEF)
+
+KMODE_EXCEPTION_NOT_HANDLED
+
+
+Technical information:
+
+*** ultravgamer.exe — Address 0xC0000VIBE base at 0x000ULTRA
+*** ntoskrnl.exe — Address 0xC000COOL base at 0x000BASED</pre>
+    <div class="bsod-bar" id="bsod-bar"></div>
+    <pre>Beginning dump of physical memory...
+Memory dump complete. Rebooting...</pre>
+  </div>
+
+  <div id="top-taskbar"></div>
+
+  <div id="desktop">
+    <img id="xp-wallpaper" src="Image.jpg" alt="XP Bliss wallpaper" draggable="false">
+
+    <div class="desktop-icon" onclick="toggleWindow()">🎮</div>
+
+    <div class="desktop-icon" onclick="openDrawing()" style="top:70px;">🎨</div>
+
+    <div id="main-window">
+      <div class="xp-titlebar" id="titlebar">
+        <span style="font-size:14px;margin-right:2px;"></span>
+        <span class="xp-titlebar-text">ultravgamer.site</span>
+        <div class="xp-btn-group">
+          <div class="xp-winbtn" onclick="toggleWindow()" title="Minimize">_</div>
+          <div class="xp-winbtn max" title="Maximize">□</div>
+          <div class="xp-winbtn close" onclick="triggerBSOD()" title="Close">✕</div>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="xp-inner">
+          <div class="username-display">ultravgamer</div>
+          <div class="xp-sub">streamer · creator · gamer</div>
+          <div class="xp-typewriter" id="xp-tw"></div>
+          <hr class="xp-divider">
+          <div class="xp-links">
+            <a class="xp-link xp-link-yt" href="https://www.youtube.com/@ultravgamer99" target="_blank">▶ YouTube</a>
+            <a class="xp-link xp-link-tw" href="https://www.twitch.tv/ultravgamer" target="_blank">◈ Twitch</a>
+            <a class="xp-link xp-link-dc" href="https://discord.gg/fRHGy6g7S7" target="_blank">⌖ Discord</a>
+            <a class="xp-link xp-link-pp" href="https://paypal.me/ultravgamer" target="_blank">♡ Donate</a>
+          </div>
+        </div>
+      </div>
+      <div class="xp-status-bar">
+        <div class="status-part">Ready</div>
+        <div class="status-part">● Online</div>
+        <div class="status-part">ultravgamer</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="drawing-window" style="display:none;">
+    <div class="xp-titlebar">
+      <span style="font-size:14px;margin-right:2px;">🎨</span>
+      <span class="xp-titlebar-text">Paint</span>
+      <div class="xp-btn-group">
+        <div class="xp-winbtn" onclick="minimizeDrawing()">_</div>
+        <div class="xp-winbtn close" onclick="closeDrawing()">✕</div>
+      </div>
+    </div>
+    <div class="window-body">
+      <div style="padding:10px;">
+        <div style="margin-bottom:10px;">
+          <label>Color: <input type="color" id="color-picker" value="#000000"></label>
+          <label>Brush Size: <input type="range" id="brush-size" min="1" max="50" value="5"></label>
+          <button onclick="toggleEraser()" id="eraser-btn">Eraser</button>
+          <button onclick="clearCanvas()">Clear</button>
+        </div>
+        <canvas id="paint-canvas" width="600" height="400" style="border:1px solid #000;"></canvas>
+        <div style="margin-top:10px;">
+          <button onclick="saveAsJPG()">Save as JPG</button>
+          <button onclick="saveAsPNG()">Save as PNG</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bottom-taskbar"><div class="xp-link" onclick="toggleWindow()">UltraVGamer.site</div></div>
+</div>
+
+<div id="context-menu">
+  <div class="menu-item disabled">Copy</div>
+  <div class="menu-item disabled">Paste</div>
+  <div class="menu-item" onclick="location.reload()">Restart</div>
+</div>
+
+<script>
+const boot = document.getElementById('boot-screen');
+const mainWin = document.getElementById('main-window');
+const bsod = document.getElementById('bsod');
+const bsodBar = document.getElementById('bsod-bar');
+
+setTimeout(() => {
+  boot.style.transition = 'opacity 0.4s';
+  boot.style.opacity = '0';
+  setTimeout(() => { boot.style.display = 'none'; }, 400);
+}, 1800);
+
+const lines = ['▶ streaming games every week','◈ live on twitch & youtube','⌖ join the discord server','♡ support the channel'];
+let li=0, ci=0, del=false;
+const tw = document.getElementById('xp-tw');
+function type() {
+  if (!del) {
+    if (ci < lines[li].length) { tw.textContent = lines[li].slice(0,++ci); setTimeout(type,60); }
+    else { del=true; setTimeout(type,2000); }
+  } else {
+    if (ci > 0) { tw.textContent = lines[li].slice(0,--ci); setTimeout(type,30); }
+    else { del=false; li=(li+1)%lines.length; setTimeout(type,400); }
+  }
+}
+setTimeout(type, 2400);
+
+function triggerBSOD() {
+  bsod.classList.add('show');
+  setTimeout(() => { bsodBar.style.width = '100%'; }, 100);
+  setTimeout(() => { location.reload(); }, 5000);
+}
+
+const titlebar = document.getElementById('titlebar');
+let dragging=false, startX, startY, startLeft, startTop;
+titlebar.addEventListener('mousedown', e => {
+  if (e.target.closest('.xp-winbtn')) return;
+  dragging = true;
+  const rect = mainWin.getBoundingClientRect();
+  const rootRect = document.getElementById('xp-root').getBoundingClientRect();
+  startX=e.clientX; startY=e.clientY;
+  startLeft=rect.left-rootRect.left; startTop=rect.top-rootRect.top;
+  mainWin.style.transform='none';
+  mainWin.style.left=startLeft+'px'; mainWin.style.top=startTop+'px';
+  document.body.classList.add('dragging');
+});
+document.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  mainWin.style.left=(startLeft+e.clientX-startX)+'px';
+  mainWin.style.top=(startTop+e.clientY-startY)+'px';
+});
+document.addEventListener('mouseup', () => { dragging=false; document.body.classList.remove('dragging'); });
+
+const borderSize = 5;
+let resizing = false;
+let resizeDir = '';
+let startW, startH;
+
+mainWin.addEventListener('mousemove', e => {
+  const rect = mainWin.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const w = rect.width;
+  const h = rect.height;
+  let cursor = 'default';
+  if (x < borderSize && y < borderSize) cursor = 'nw-resize';
+  else if (x < borderSize && y > h - borderSize) cursor = 'sw-resize';
+  else if (x > w - borderSize && y < borderSize) cursor = 'ne-resize';
+  else if (x > w - borderSize && y > h - borderSize) cursor = 'se-resize';
+  else if (x < borderSize) cursor = 'w-resize';
+  else if (x > w - borderSize) cursor = 'e-resize';
+  else if (y < borderSize) cursor = 'n-resize';
+  else if (y > h - borderSize) cursor = 's-resize';
+  mainWin.style.cursor = cursor;
+});
+
+mainWin.addEventListener('mousedown', e => {
+  if (e.target.closest('#titlebar') || e.target.closest('.xp-winbtn')) return;
+  const rect = mainWin.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const w = rect.width;
+  const h = rect.height;
+  resizeDir = '';
+  if (x < borderSize) resizeDir += 'w';
+  if (x > w - borderSize) resizeDir += 'e';
+  if (y < borderSize) resizeDir += 'n';
+  if (y > h - borderSize) resizeDir += 's';
+  if (resizeDir) {
+    resizing = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    startW = w;
+    startH = h;
+    startLeft = rect.left - document.getElementById('xp-root').getBoundingClientRect().left;
+    startTop = rect.top - document.getElementById('xp-root').getBoundingClientRect().top;
+    mainWin.style.transform = 'none';
+    mainWin.style.left = startLeft + 'px';
+    mainWin.style.top = startTop + 'px';
+    document.body.classList.add('dragging');
+    e.preventDefault();
+  }
+});
+
+document.addEventListener('mousemove', e => {
+  if (dragging) {
+    let newLeft = startLeft + e.clientX - startX;
+    let newTop = startTop + e.clientY - startY;
+    const rootRect = document.getElementById('xp-root').getBoundingClientRect();
+    const winW = mainWin.offsetWidth;
+    const winH = mainWin.offsetHeight;
+    newLeft = Math.max(0, Math.min(newLeft, rootRect.width - winW));
+    newTop = Math.max(0, Math.min(newTop, rootRect.height - winH));
+    mainWin.style.left = newLeft + 'px';
+    mainWin.style.top = newTop + 'px';
+  }
+  if (resizing) {
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    let newLeft = startLeft;
+    let newTop = startTop;
+    let newW = startW;
+    let newH = startH;
+    const minW = 200;
+    const minH = 200;
+    if (resizeDir.includes('w')) {
+      newLeft += dx;
+      newW -= dx;
+    }
+    if (resizeDir.includes('e')) {
+      newW += dx;
+    }
+    if (resizeDir.includes('n')) {
+      newTop += dy;
+      newH -= dy;
+    }
+    if (resizeDir.includes('s')) {
+      newH += dy;
+    }
+    if (newW < minW) {
+      newW = minW;
+      if (resizeDir.includes('w')) newLeft = startLeft + (startW - minW);
+    }
+    if (newH < minH) {
+      newH = minH;
+      if (resizeDir.includes('n')) newTop = startTop + (startH - minH);
+    }
+    const rootRect = document.getElementById('xp-root').getBoundingClientRect();
+    newLeft = Math.max(0, newLeft);
+    newTop = Math.max(0, newTop);
+    newW = Math.min(newW, rootRect.width - newLeft);
+    newH = Math.min(newH, rootRect.height - newTop);
+    newW = Math.max(minW, newW);
+    newH = Math.max(minH, newH);
+    if (newLeft + newW > rootRect.width) {
+      newLeft = rootRect.width - newW;
+    }
+    if (newTop + newH > rootRect.height) {
+      newTop = rootRect.height - newH;
+    }
+    newLeft = Math.max(0, newLeft);
+    newTop = Math.max(0, newTop);
+    mainWin.style.left = newLeft + 'px';
+    mainWin.style.top = newTop + 'px';
+    mainWin.style.width = newW + 'px';
+    mainWin.style.height = newH + 'px';
+  }
+});
+
+document.addEventListener('mouseup', () => { dragging=false; resizing=false; resizeDir=''; document.body.classList.remove('dragging'); });
+
+function toggleWindow() {
+  const win = document.getElementById('main-window');
+  win.style.display = win.style.display === 'none' ? 'block' : 'none';
+}
+
+document.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  const menu = document.getElementById('context-menu');
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+  menu.style.display = 'block';
+});
+
+document.addEventListener('click', () => {
+  document.getElementById('context-menu').style.display = 'none';
+});
+
+function openDrawing() {
+  document.getElementById('drawing-window').style.display = 'block';
+}
+
+function minimizeDrawing() {
+  document.getElementById('drawing-window').style.display = 'none';
+}
+
+function closeDrawing() {
+  document.getElementById('drawing-window').style.display = 'none';
+}
+
+const canvas = document.getElementById('paint-canvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+
+document.getElementById('color-picker').addEventListener('change', (e) => {
+  ctx.strokeStyle = e.target.value;
+  ctx.globalCompositeOperation = 'source-over'; // reset to draw mode
+  isEraser = false;
+  document.getElementById('eraser-btn').textContent = 'Eraser';
+});
+
+document.getElementById('brush-size').addEventListener('input', (e) => {
+  ctx.lineWidth = e.target.value;
+});
+
+let isEraser = false;
+
+function toggleEraser() {
+  isEraser = !isEraser;
+  if (isEraser) {
+    ctx.globalCompositeOperation = 'destination-out';
+    document.getElementById('eraser-btn').textContent = 'Draw';
+  } else {
+    ctx.globalCompositeOperation = 'source-over';
+    document.getElementById('eraser-btn').textContent = 'Eraser';
+  }
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  drawing = true;
+  ctx.beginPath();
+  ctx.moveTo(e.offsetX, e.offsetY);
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (drawing) {
+    ctx.lineTo(e.offsetX, e.offsetY);
+    ctx.stroke();
+  }
+});
+
+canvas.addEventListener('mouseup', () => {
+  drawing = false;
+});
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function saveAsJPG() {
+  const link = document.createElement('a');
+  link.download = 'drawing.jpg';
+  link.href = canvas.toDataURL('image/jpeg');
+  link.click();
+}
+
+function saveAsPNG() {
+  const link = document.createElement('a');
+  link.download = 'drawing.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+const drawingWin = document.getElementById('drawing-window');
+const drawingTitlebar = drawingWin.querySelector('.xp-titlebar');
+let drawingDragging = false, drawingStartX, drawingStartY, drawingStartLeft, drawingStartTop;
+
+drawingTitlebar.addEventListener('mousedown', e => {
+  if (e.target.closest('.xp-winbtn')) return;
+  drawingDragging = true;
+  const rect = drawingWin.getBoundingClientRect();
+  const rootRect = document.getElementById('xp-root').getBoundingClientRect();
+  drawingStartX = e.clientX; drawingStartY = e.clientY;
+  drawingStartLeft = rect.left - rootRect.left; drawingStartTop = rect.top - rootRect.top;
+  drawingWin.style.left = drawingStartLeft + 'px'; drawingWin.style.top = drawingStartTop + 'px';
+  drawingWin.style.transform = 'translate(0,0)';
+  document.body.classList.add('dragging');
+});
+
+document.addEventListener('mousemove', e => {
+  if (drawingDragging) {
+    let dx = e.clientX - drawingStartX;
+    let dy = e.clientY - drawingStartY;
+    const rootRect = document.getElementById('xp-root').getBoundingClientRect();
+    const winW = drawingWin.offsetWidth;
+    const winH = drawingWin.offsetHeight;
+    dx = Math.max(-drawingStartLeft, Math.min(dx, rootRect.width - winW - drawingStartLeft));
+    dy = Math.max(-drawingStartTop, Math.min(dy, rootRect.height - winH - drawingStartTop));
+    drawingWin.style.transform = `translate(${dx}px, ${dy}px)`;
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  if (drawingDragging) {
+    const rect = drawingWin.getBoundingClientRect();
+    const rootRect = document.getElementById('xp-root').getBoundingClientRect();
+    drawingWin.style.left = rect.left - rootRect.left + 'px';
+    drawingWin.style.top = rect.top - rootRect.top + 'px';
+    drawingWin.style.transform = 'none';
+  }
+  drawingDragging = false;
+  document.body.classList.remove('dragging');
+});
+
+const drawingBorderSize = 5;
+let drawingResizing = false;
+let drawingResizeDir = '';
+let drawingStartW, drawingStartH;
+
+drawingWin.addEventListener('mousemove', e => {
+  const rect = drawingWin.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const w = rect.width;
+  const h = rect.height;
+  let cursor = 'default';
+  if (x < drawingBorderSize && y < drawingBorderSize) cursor = 'nw-resize';
+  else if (x < drawingBorderSize && y > h - drawingBorderSize) cursor = 'sw-resize';
+  else if (x > w - drawingBorderSize && y < drawingBorderSize) cursor = 'ne-resize';
+  else if (x > w - drawingBorderSize && y > h - drawingBorderSize) cursor = 'se-resize';
+  else if (x < drawingBorderSize) cursor = 'w-resize';
+  else if (x > w - drawingBorderSize) cursor = 'e-resize';
+  else if (y < drawingBorderSize) cursor = 'n-resize';
+  else if (y > h - drawingBorderSize) cursor = 's-resize';
+  drawingWin.style.cursor = cursor;
+});
+
+drawingWin.addEventListener('mousedown', e => {
+  if (e.target.closest('#drawing-window .xp-titlebar') || e.target.closest('.xp-winbtn')) return;
+  const rect = drawingWin.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const w = rect.width;
+  const h = rect.height;
+  drawingResizeDir = '';
+  if (x < drawingBorderSize) drawingResizeDir += 'w';
+  if (x > w - drawingBorderSize) drawingResizeDir += 'e';
+  if (y < drawingBorderSize) drawingResizeDir += 'n';
+  if (y > h - drawingBorderSize) drawingResizeDir += 's';
+  if (drawingResizeDir) {
+    drawingResizing = true;
+    drawingStartX = e.clientX;
+    drawingStartY = e.clientY;
+    drawingStartW = w;
+    drawingStartH = h;
+    drawingStartLeft = rect.left - document.getElementById('xp-root').getBoundingClientRect().left;
+    drawingStartTop = rect.top - document.getElementById('xp-root').getBoundingClientRect().top;
+    drawingWin.style.transform = 'none';
+    drawingWin.style.left = drawingStartLeft + 'px';
+    drawingWin.style.top = drawingStartTop + 'px';
+    document.body.classList.add('dragging');
+    e.preventDefault();
+  }
+});
+
+document.addEventListener('mousemove', e => {
+  if (drawingResizing) {
+    const dx = e.clientX - drawingStartX;
+    const dy = e.clientY - drawingStartY;
+    let newLeft = drawingStartLeft;
+    let newTop = drawingStartTop;
+    let newW = drawingStartW;
+    let newH = drawingStartH;
+    const minW = 200;
+    const minH = 200;
+    if (drawingResizeDir.includes('w')) {
+      newLeft += dx;
+      newW -= dx;
+    }
+    if (drawingResizeDir.includes('e')) {
+      newW += dx;
+    }
+    if (drawingResizeDir.includes('n')) {
+      newTop += dy;
+      newH -= dy;
+    }
+    if (drawingResizeDir.includes('s')) {
+      newH += dy;
+    }
+    if (newW < minW) {
+      newW = minW;
+      if (drawingResizeDir.includes('w')) newLeft = drawingStartLeft + (drawingStartW - minW);
+    }
+    if (newH < minH) {
+      newH = minH;
+      if (drawingResizeDir.includes('n')) newTop = drawingStartTop + (drawingStartH - minH);
+    }
+    const rootRect = document.getElementById('xp-root').getBoundingClientRect();
+    newLeft = Math.max(0, newLeft);
+    newTop = Math.max(0, newTop);
+    newW = Math.min(newW, rootRect.width - newLeft);
+    newH = Math.min(newH, rootRect.height - newTop);
+    newW = Math.max(minW, newW);
+    newH = Math.max(minH, newH);
+    if (newLeft + newW > rootRect.width) {
+      newLeft = rootRect.width - newW;
+    }
+    if (newTop + newH > rootRect.height) {
+      newTop = rootRect.height - newH;
+    }
+    newLeft = Math.max(0, newLeft);
+    newTop = Math.max(0, newTop);
+    drawingWin.style.left = newLeft + 'px';
+    drawingWin.style.top = newTop + 'px';
+    drawingWin.style.width = newW + 'px';
+    drawingWin.style.height = newH + 'px';
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  drawingResizing = false;
+  drawingResizeDir = '';
+});
+const fullTitle = "ultravgamer";
+let titleIndex = 0;
+setInterval(() => {
+  document.title = fullTitle.slice(0, titleIndex);
+  titleIndex++;
+  if (titleIndex > fullTitle.length) {
+    titleIndex = 0;
+  }
+}, 200);
+</script>
+<title>UltraVGamer</title>
