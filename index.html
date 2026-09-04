@@ -136,7 +136,6 @@
   .xp-link-yt { color:#cc0000; }
   .xp-link-tw { color:#6400c8; }
   .xp-link-dc { color:#3440d0; }
-  .xp-link-pp { color:#003080; }
   .xp-status-bar {
     background: linear-gradient(180deg, #ece9d8, #d4d0c0);
     border-top:1px solid #aaa; padding:2px 8px;
@@ -165,7 +164,7 @@
   #boot-screen .boot-text {
     color:#fff; font-family:Tahoma,Arial,sans-serif; font-size:18px; font-weight:700; letter-spacing:4px;
   }
-  .dragging { user-select:none; }
+  .dragging { user-select:none; cursor:grabbing !important; }
   #context-menu {
     position: absolute;
     background: #ece9d8;
@@ -199,6 +198,42 @@
   #bottom-taskbar {
     height:30px; flex-shrink:0;
     background: linear-gradient(180deg, rgba(0,88,224,0.7) 0%, rgba(42,139,255,0.7) 50%, rgba(0,88,224,0.7) 100%);
+  }
+
+  .itch-wrap {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #aaa;
+    border-bottom: 1px solid #fff;
+    overflow: hidden;
+  }
+  .itch-wrap iframe {
+    display: block;
+    width: 100%;
+    max-width: 554px;
+    height: 169px;
+    margin: 0 auto;
+    border: 0;
+  }
+  @media (max-width: 700px) {
+    #main-window {
+      width: calc(100% - 16px);
+      left: 8px;
+      top: 8px;
+    }
+    #drawing-window {
+      width: calc(100% - 16px);
+      height: calc(100% - 50px);
+      left: 8px;
+      top: 8px;
+    }
+    #paint-canvas {
+      width: 100%;
+      height: auto;
+    }
+    .xp-inner {
+      padding: 16px 12px;
+    }
   }
 </style>
 
@@ -254,7 +289,19 @@ Memory dump complete. Rebooting...</pre>
             <a class="xp-link xp-link-yt" href="https://www.youtube.com/@ultravgamer99" target="_blank">▶ YouTube</a>
             <a class="xp-link xp-link-tw" href="https://www.twitch.tv/ultravgamer" target="_blank">◈ Twitch</a>
             <a class="xp-link xp-link-dc" href="https://discord.gg/fRHGy6g7S7" target="_blank">⌖ Discord</a>
-            <a class="xp-link xp-link-pp" href="https://paypal.me/ultravgamer" target="_blank">♡ Donate</a>
+          </div>
+          <div class="itch-wrap">
+            <iframe
+              frameborder="0"
+              src="https://itch.io/embed/4970304?border_width=2&amp;bg_color=0e0e0e&amp;fg_color=82ecf8&amp;link_color=5b86fa&amp;border_color=89bcbb"
+              width="554"
+              height="169"
+              loading="lazy"
+              title="Untitled Idle Game by Andrew">
+              <a href="https://ultravgamer.itch.io/untitled-idle-game" target="_blank" rel="noopener">
+                Untitled Idle Game by Andrew
+              </a>
+            </iframe>
           </div>
         </div>
       </div>
@@ -313,7 +360,7 @@ setTimeout(() => {
   setTimeout(() => { boot.style.display = 'none'; }, 400);
 }, 1800);
 
-const lines = ['▶ streaming games every week','◈ live on twitch & youtube','⌖ join the discord server','♡ support the channel'];
+const lines = ['▶ streaming games every week','◈ live on twitch & youtube','⌖ join the discord server'];
 let li=0, ci=0, del=false;
 const tw = document.getElementById('xp-tw');
 function type() {
@@ -334,24 +381,49 @@ function triggerBSOD() {
 }
 
 const titlebar = document.getElementById('titlebar');
-let dragging=false, startX, startY, startLeft, startTop;
-titlebar.addEventListener('mousedown', e => {
-  if (e.target.closest('.xp-winbtn')) return;
-  dragging = true;
-  const rect = mainWin.getBoundingClientRect();
-  const rootRect = document.getElementById('xp-root').getBoundingClientRect();
-  startX=e.clientX; startY=e.clientY;
-  startLeft=rect.left-rootRect.left; startTop=rect.top-rootRect.top;
-  mainWin.style.transform='none';
-  mainWin.style.left=startLeft+'px'; mainWin.style.top=startTop+'px';
-  document.body.classList.add('dragging');
-});
-document.addEventListener('mousemove', e => {
-  if (!dragging) return;
-  mainWin.style.left=(startLeft+e.clientX-startX)+'px';
-  mainWin.style.top=(startTop+e.clientY-startY)+'px';
-});
-document.addEventListener('mouseup', () => { dragging=false; document.body.classList.remove('dragging'); });
+  let dragging=false, startX, startY, startLeft, startTop;
+  let dragFrame = 0, pendingX = 0, pendingY = 0;
+
+  titlebar.addEventListener('pointerdown', e => {
+    if (e.target.closest('.xp-winbtn')) return;
+    dragging = true;
+    titlebar.setPointerCapture?.(e.pointerId);
+    const rect = mainWin.getBoundingClientRect();
+    const rootRect = document.getElementById('xp-root').getBoundingClientRect();
+    startX=e.clientX; startY=e.clientY;
+    startLeft=rect.left-rootRect.left; startTop=rect.top-rootRect.top;
+    mainWin.style.transform='none';
+    mainWin.style.left=startLeft+'px'; mainWin.style.top=startTop+'px';
+    document.body.classList.add('dragging');
+    e.preventDefault();
+  });
+
+  titlebar.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    pendingX = e.clientX;
+    pendingY = e.clientY;
+    if (!dragFrame) {
+      dragFrame = requestAnimationFrame(() => {
+        const rootRect = document.getElementById('xp-root').getBoundingClientRect();
+        const winW = mainWin.offsetWidth;
+        const winH = mainWin.offsetHeight;
+        const newLeft = Math.max(0, Math.min(startLeft + pendingX - startX, rootRect.width - winW));
+        const newTop = Math.max(0, Math.min(startTop + pendingY - startY, rootRect.height - winH));
+        mainWin.style.left = newLeft + 'px';
+        mainWin.style.top = newTop + 'px';
+        dragFrame = 0;
+      });
+    }
+  });
+
+  titlebar.addEventListener('pointerup', () => {
+    dragging=false;
+    document.body.classList.remove('dragging');
+  });
+  titlebar.addEventListener('pointercancel', () => {
+    dragging=false;
+    document.body.classList.remove('dragging');
+  });
 
 const borderSize = 5;
 let resizing = false;
@@ -528,22 +600,33 @@ function toggleEraser() {
   }
 }
 
-canvas.addEventListener('mousedown', (e) => {
-  drawing = true;
-  ctx.beginPath();
-  ctx.moveTo(e.offsetX, e.offsetY);
-});
+canvas.addEventListener('pointerdown', (e) => {
+    drawing = true;
+    lastPoint = canvasPoint(e);
+    canvas.setPointerCapture?.(e.pointerId);
+    e.preventDefault();
+  });
 
-canvas.addEventListener('mousemove', (e) => {
-  if (drawing) {
-    ctx.lineTo(e.offsetX, e.offsetY);
+  canvas.addEventListener('pointermove', (e) => {
+    if (!drawing || !lastPoint) return;
+    const p = canvasPoint(e);
+    ctx.beginPath();
+    ctx.moveTo(lastPoint.x, lastPoint.y);
+    ctx.lineTo(p.x, p.y);
     ctx.stroke();
-  }
-});
+    lastPoint = p;
+  });
 
-canvas.addEventListener('mouseup', () => {
-  drawing = false;
-});
+  function stopDrawing() {
+    drawing = false;
+    lastPoint = null;
+  }
+
+  canvas.addEventListener('pointerup', stopDrawing);
+  canvas.addEventListener('pointercancel', stopDrawing);
+  canvas.addEventListener('pointerleave', () => {
+    if (drawing) stopDrawing();
+  });
 
 function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
